@@ -9,27 +9,31 @@
 <style>
 /* VOICE: a gym-floor tool, loud numbers, nothing else
    IDEA: the PM5's own monitor, blown up and shared between lanes
-   PICTURE: the sticky phase banner (huge countdown) over one card per erg
+   PICTURE: the phase banner (huge countdown) over a running loop and one card per erg
    COLOUR and TYPE: work = hot red-orange, rest = cold blue, ground ink/paper; Barlow Condensed numerals
-   LAYOUT: banner, then lanes, then session setup; stacks on phones */
+   LAYOUT: banner, loop, lanes, setup; two columns in landscape and on the big screen */
 :root{color-scheme:light dark;--bg:light-dark(#f4f5f7,#0c0f13);--card:light-dark(#fff,#161b22);--ink:light-dark(#0c0f13,#eef1f5);--mute:light-dark(#5b6472,#8d97a6);--line:light-dark(#dde1e7,#262d38);--work:#ff4521;--rest:#1f6fff;--warm:#7a5cff;--ok:#18a058;--bad:#e5484d}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif;overflow-x:clip}
-.num,.ph-time,.pace,.mets b{font-family:"Barlow Condensed",Barlow,sans-serif;font-variant-numeric:tabular-nums}
-.phase{position:sticky;top:0;z-index:5;padding:14px max(5vw,16px) 0;background:#2a313c;color:#fff;transition:background .3s}
-.phase.work{background:var(--work)}.phase.rest{background:var(--rest)}.phase.warm,.phase.count{background:var(--warm)}.phase.done{background:var(--ok)}
-.ph-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
-.ph-label{font-size:22px;font-weight:600}
-.ph-sub{font-size:15px;opacity:.85}
+.ph-time,.pace,.mets b,.num{font-family:"Barlow Condensed",Barlow,sans-serif;font-variant-numeric:tabular-nums}
+.phase{position:sticky;top:0;z-index:5;padding:12px max(5vw,16px) 0;background:#2a313c;color:#fff;transition:background .3s}
+.phase.work{background:var(--work)}.phase.rest{background:var(--rest)}.phase.warm,.phase.count{background:var(--warm)}.phase.done{background:var(--ok)}.phase.paused{background:#59616e}
+.ph-top{display:flex;align-items:center;gap:12px}
+.ph-label{font-size:22px;font-weight:600}.ph-sub{font-size:15px;opacity:.85;margin-left:auto;text-align:right}
+.fs{width:44px;height:44px;flex:none;border:0;border-radius:10px;background:rgba(255,255,255,.15);color:#fff;cursor:pointer;display:grid;place-items:center}
+.ph-main{display:flex;align-items:center;gap:4px 20px;flex-wrap:wrap}
 .ph-time{font-size:clamp(72px,22vw,150px);font-weight:800;line-height:1;margin:2px 0 10px}
+.quote{font:800 clamp(22px,6vw,40px)/1.1 "Barlow Condensed",sans-serif;margin:0 0 10px;text-wrap:balance}
+.quote:empty{display:none}
 .ph-bar{height:8px;margin:0 calc(-1*max(5vw,16px));background:rgba(0,0,0,.25)}.ph-bar i{display:block;height:100%;width:0;background:#fff}
-main{padding:16px max(5vw,16px) 40px;max-width:1240px;margin:auto}
+main{padding:16px max(5vw,16px) 40px;max-width:1400px;margin:auto}
 .ergs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}
 .erg{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px 14px}
 .erg.lead{border-color:var(--work)}
 .eh{display:flex;align-items:center;gap:8px}
-.nm{flex:1;font:600 18px Barlow,sans-serif;color:var(--ink);background:none;border:0;border-bottom:1px dashed var(--line);padding:4px 0}
+.nm{flex:1;font:600 18px Barlow,sans-serif;color:var(--ink);background:none;border:0;border-bottom:1px dashed var(--line);padding:4px 0;border-radius:0}
 .st{font-size:13px;color:var(--mute);white-space:nowrap;background:none;border:0;padding:6px}
 .st::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:var(--mute)}
 .st.live::before{background:var(--ok)}.st.lost::before,.st.error::before{background:var(--bad)}.st.connecting::before{background:#f5a524}
@@ -38,128 +42,189 @@ main{padding:16px max(5vw,16px) 40px;max-width:1240px;margin:auto}
 .mets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:6px}
 .mets b{display:block;font-size:30px;font-weight:600;line-height:1.1}.mets small{color:var(--mute);font-size:13px}
 .last{margin-top:8px;font-size:14px;color:var(--mute);min-height:21px}
-.row{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0;align-items:center}
 .btn{min-height:48px;padding:0 18px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:600 16px Barlow,sans-serif;cursor:pointer}
 .btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}.btn.danger{border-color:var(--bad);color:var(--bad)}.btn.ghost{background:none}
-.btn:focus-visible,input:focus-visible{outline:3px solid var(--rest);outline-offset:2px}
+.btn:focus-visible,input:focus-visible,.fs:focus-visible{outline:3px solid var(--rest);outline-offset:2px}
+.pacer{display:flex;align-items:center;gap:8px}.pacer input{width:5.5em}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
-h2{margin:0 0 10px;font-size:22px}
+h2{margin:0 0 10px;font-size:22px}h3{margin:10px 0 0;font-size:18px}
 .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-@media(max-width:520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mets b{font-size:26px}}
+.grid2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px;margin-top:12px}
 label{font-size:14px;color:var(--mute);display:grid;gap:4px}
 input{font:600 18px Barlow,sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;width:100%}
-.presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.presets button{min-height:40px;padding:0 12px;border-radius:20px;border:1px solid var(--line);background:none;color:var(--ink);font:14px Barlow,sans-serif;cursor:pointer}
-.hint{font-size:14px;color:var(--mute);margin:8px 0 0}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.presets button{min-height:40px;padding:0 14px;border-radius:20px;border:1px solid var(--line);background:none;color:var(--ink);font:15px Barlow,sans-serif;cursor:pointer}
+.hint,.gs{font-size:14px;color:var(--mute);margin:8px 0 0}
 .warn{background:light-dark(#fff1ee,#2b1612);border:1px solid var(--work);border-radius:10px;padding:10px 12px;font-size:15px}
 table{border-collapse:collapse;width:100%;margin:6px 0 16px;font-size:15px}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
 tfoot td{font-weight:600}.scroll{overflow-x:auto}
-h3{margin:10px 0 0;font-size:18px}
 .loop{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px 12px;margin-bottom:12px}
 .track{display:block;width:100%;height:auto;max-height:240px}
-.track .lane{fill:none;stroke:var(--line);stroke-width:11}
-.track .sl{stroke:var(--ink);stroke-width:3}
-.track .ttl{font:600 17px Barlow,sans-serif;fill:var(--ink);text-anchor:middle}
-.track .sub{font:14px Barlow,sans-serif;fill:var(--mute);text-anchor:middle}
-.dot{transition:transform .5s linear}
-.dot text{font:800 12px "Barlow Condensed",sans-serif;fill:#fff;text-anchor:middle;dominant-baseline:central}
+.track .lane{fill:none;stroke:var(--line);stroke-width:11}.track .sl{stroke:var(--ink);stroke-width:3}
+.track .ttl{font:600 17px Barlow,sans-serif;fill:var(--ink);text-anchor:middle}.track .sub{font:14px Barlow,sans-serif;fill:var(--mute);text-anchor:middle}
+.dot{transition:transform .5s linear}.dot text{font:800 11px "Barlow Condensed",sans-serif;fill:#fff;text-anchor:middle;dominant-baseline:central}.tv .dot text{font-size:5px}
 .board{display:grid;gap:2px;margin-top:6px}
-.br{display:grid;grid-template-columns:14px minmax(0,1fr) auto auto auto;gap:10px;align-items:center;min-height:32px}
-.br .c{width:14px;height:14px;border-radius:50%}
-.br .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.br.me .n{font-weight:600}
+.br{display:grid;grid-template-columns:14px minmax(0,1fr) 62px 50px 66px;gap:10px;align-items:center;min-height:32px}
+.br .c{width:14px;height:14px;border-radius:50%}.br .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.br.me .n{font-weight:600}
 .br .v{font:600 21px "Barlow Condensed",sans-serif;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
-.br .g{color:var(--mute);min-width:3.2em}
-.gs{font-size:14px;color:var(--mute)}
-.grid2{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px;margin-top:12px}
+.br .g{color:var(--mute);min-width:3.2em}.br .t,.br.bh{display:none}
+.tv-only{display:none}
+@media(max-width:520px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mets b{font-size:26px}}
+/* landscape phone: banner becomes one line, loop and erg side by side */
+@media(orientation:landscape) and (max-height:560px){
+  .phase{position:static;padding-top:6px}.ph-top{gap:8px}.ph-label{font-size:18px}
+  .ph-main{flex-wrap:nowrap}.ph-time{font-size:clamp(40px,19vh,84px);margin:0 0 6px}.quote{font-size:clamp(18px,7vh,32px);margin:0 0 6px}
+  main{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:0 12px;align-items:start;padding-top:10px}
+  main>*{grid-column:1/-1}main>.loop:not([hidden]){grid-column:1;margin:0}main>.loop:not([hidden])~.ergs{grid-column:2}
+  .track{max-height:46vh}.pace{font-size:clamp(44px,15vh,72px)}
+  .loop{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:4px 12px;align-items:center;padding:8px 10px}.loop .gs{display:none}
+  .br{grid-template-columns:12px minmax(0,1fr) 54px 44px;gap:6px;min-height:28px;font-size:15px}.br .c{width:12px;height:12px}.br .v{font-size:18px}.br>:nth-child(5){display:none}
+}
+/* big screen (tablet): everyone large, nothing to connect */
+.tv .ergs,.tv #addRow,.tv .pacer-row{display:none}.tv .tv-only{display:inline-flex}
+.tv #runRow{display:none!important}
+.tv .phase{position:relative;padding:0 24px;height:clamp(64px,11vh,130px);display:flex;flex-direction:column;justify-content:center}
+.tv .ph-label{font-size:clamp(20px,3vh,32px)}
+.tv .ph-main{position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);pointer-events:none}.tv .ph-time{font-size:clamp(52px,9.5vh,120px);margin:0}.tv .ph-main .quote{display:none}
+.tv .ph-bar{position:absolute;left:0;right:0;bottom:0;margin:0}
+.tvQ{display:none}.tv .tvQ{display:block;font:800 clamp(26px,4.6vh,60px)/1.05 "Barlow Condensed",sans-serif;color:var(--work);margin-bottom:1vh;text-wrap:balance}.tv .tvQ:empty{display:none}
+.hb{gap:10px}.hbtn{min-height:44px;background:rgba(255,255,255,.16);color:#fff;border:0}
+.tv main{max-width:none;padding:12px 20px}
+.tv .loop{position:relative;display:block;margin:0;padding:0;height:calc(100dvh - var(--hh,200px) - 24px);min-height:380px}
+.tv .track{position:absolute;inset:0;width:100%;height:100%;max-height:none}.tv .track .ttl,.tv .track .sub{display:none}
+.tv #lb{position:absolute;display:flex;flex-direction:column;justify-content:center}
+.tvT{display:none}.tv .tvT{display:block;font:600 clamp(18px,3vh,32px) Barlow,sans-serif;margin-bottom:.6vh}
+.tv .board{grid-template-columns:auto minmax(4.5em,1fr) auto auto auto auto auto;gap:0;font-size:clamp(20px,3.2vh,36px)}
+.tv .br,.tv .br.bh{display:contents}
+.tv .br>*{min-width:max-content;display:flex;align-items:center;justify-content:flex-end;min-height:clamp(38px,6.8vh,90px);padding:0 0 0 1.4vh;border-bottom:1px solid var(--line);white-space:nowrap}
+.tv .br>.n{min-width:0;overflow:hidden;text-overflow:ellipsis;justify-content:flex-start;display:block;line-height:clamp(38px,6.8vh,90px)}.tv .br>i.c{justify-content:center;padding:0;width:auto;height:auto;border-radius:0;background:none!important}
+.tv .br>i.c::before{content:"";width:2.2vh;height:2.2vh;border-radius:50%;background:var(--dc)}
+.tv .br .v{font-size:clamp(22px,4vh,52px)}.tv .br .t{display:flex}.tv .br .g{font-size:clamp(16px,2.6vh,30px)}
+.tv .br.bh>*{min-height:clamp(26px,4vh,40px);font-size:clamp(13px,1.8vh,18px);color:var(--mute);line-height:normal}.tv .br.bh>.v{font:inherit}
+.tv .loop .gs{margin-top:1.5vh}
+/* spectator mode: read-only, nothing to press */
+.watch #ergs,.watch #addRow,.watch #setup,.watch #runRow,.watch #hb,.watch #copyRes,.watch #tcx,.watch #newSess,.watch #warn{display:none!important}
+.wjoin{max-width:520px;margin:10vh auto;display:grid;gap:12px}
 @media(prefers-reduced-motion:reduce){.phase,.dot{transition:none}}
 </style>
 </head>
 <body>
 <header id="phase" class="phase">
-  <div class="ph-top"><div class="ph-label" id="phLabel">Ready</div><div class="ph-sub" id="phSub"></div></div>
-  <div class="ph-time" id="phTime">0:00</div>
+  <div class="ph-top"><div class="ph-label" id="phLabel">Ready</div><div class="ph-sub" id="phSub"></div>
+    <span class="tv-only hb" id="hb" hidden><button id="hPause" class="btn hbtn">Pause</button><button id="hStop" class="btn hbtn">Stop</button></span>
+    <button id="fs" class="fs" aria-label="Fullscreen" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div>
+  <div class="ph-main"><div class="ph-time" id="phTime">0:00</div><div class="quote" id="quote"></div></div>
   <div class="ph-bar"><i id="phBar"></i></div>
 </header>
-<main>
+<main id="main">
+  <form class="panel wjoin" id="wjoin" hidden><h2>Watch a session</h2><label>Spectator code<input id="wjIn" autocapitalize="off" autocomplete="off" spellcheck="false"></label><button class="btn primary">Watch</button></form>
   <section class="loop" id="loop" hidden>
     <svg class="track" id="track" viewBox="0 0 400 200" role="img" aria-label="Skiers on the loop"></svg>
-    <div class="board" id="board"></div>
-    <div class="gs"></div>
+    <div id="lb"><div class="tvQ" id="tvQ"></div><div class="tvT" id="tvT"></div><div class="board" id="board"></div><div class="gs"></div></div>
   </section>
   <section id="ergs" class="ergs" aria-live="off"></section>
-  <div class="row">
+  <div class="row" id="addRow">
     <button id="addErg" class="btn primary">+ Connect SkiErg</button>
-    <button id="addDemo" class="btn ghost">+ Demo erg</button>
+    <span class="pacer"><button id="addPacer" class="btn">+ Pacer</button><input id="pacerPace" value="2:10" inputmode="numeric" aria-label="Pacer pace per 500 m"><small style="color:var(--mute)">/500 m</small></span>
+    <button id="addDemo" class="btn ghost" hidden>+ Demo erg</button>
   </div>
   <p id="warn" class="warn" hidden></p>
+  <div class="row" id="runRow" hidden><button id="pause" class="btn">Pause</button><button id="stop" class="btn danger">Stop session</button></div>
   <section class="panel" id="setup">
     <h2>Session</h2>
     <div class="grid">
-      <label>Work<input id="work" value="1:00" inputmode="numeric"></label>
-      <label>Rest<input id="rest" value="0:30" inputmode="numeric"></label>
-      <label>Rounds<input id="reps" type="number" min="1" max="99" value="8"></label>
-      <label>Warm-up<input id="warm" value="0:00" inputmode="numeric"></label>
+      <label>Work<input id="work" value="5:00" inputmode="numeric" class="tm"></label>
+      <label>Rest<input id="rest" value="2:00" inputmode="numeric" class="tm"></label>
+      <label>Rounds<input id="reps" type="number" min="1" max="99" value="5" inputmode="numeric"></label>
+      <label>Warm-up<input id="warm" value="0:00" inputmode="numeric" class="tm"></label>
     </div>
     <div class="grid2">
       <label>Group code (same on every phone)<input id="room" placeholder="e.g. skigjengen" autocapitalize="off" autocomplete="off" spellcheck="false"></label>
-      <label>Loop (m)<input id="lap" type="number" min="20" max="2000" value="100"></label>
+      <label>Loop (m)<input id="lap" type="number" min="20" max="2000" value="400" inputmode="numeric"></label>
     </div>
     <div class="gs"></div>
     <div class="presets" id="presets">
-      <button data-p="0:30,0:30,10">10 × 30/30</button>
-      <button data-p="1:00,0:30,8">8 × 1:00/0:30</button>
-      <button data-p="0:20,0:10,8">Tabata 8 × 20/10</button>
-      <button data-p="4:00,2:00,4">4 × 4:00/2:00</button>
-      <button data-p="2:00,1:00,6">6 × 2:00/1:00</button>
+      <button data-p="500,200,5">5 × 5:00 / 2:00</button>
+      <button data-p="400,200,6">6 × 4:00 / 2:00</button>
+      <button data-p="800,200,5">5 × 8:00 / 2:00</button>
     </div>
     <div class="row">
       <button id="startNow" class="btn primary">Start in 10 s</button>
       <button id="startMin" class="btn">Start at <span id="minLbl" class="num">--:--</span></button>
     </div>
-    <p class="hint">Several phones: enter the same group code on each phone and connect each phone to its own erg. Starting on one phone starts everyone, and all skiers show on the loop. Without internet, tap “Start at …” on every phone instead. One phone can also connect all three ergs.</p>
+    <p class="hint">Times are typed as digits: 500 = 5:00, 130 = 1:30, 45 = 0:45. With a group code, starting or pausing on one phone does it for everyone. Without internet, tap “Start at …” on every phone.</p>
+    <div class="grid2">
+      <label>Spectator code (for friends watching, not the group code)<input id="wcode" placeholder="e.g. heiagjengen" autocapitalize="off" autocomplete="off" spellcheck="false"></label>
+      <button id="wlink" class="btn" style="align-self:end">Copy spectator link</button>
+    </div>
+    <p class="hint" id="wlinkTxt"></p>
+    <div class="row"><button id="tvBtn" class="btn ghost">Big-screen mode (tablet)</button></div>
   </section>
-  <div class="row" id="runRow" hidden><button id="stop" class="btn danger">Stop session</button></div>
   <section class="panel" id="results" hidden>
     <h2>Results</h2><div id="resBody"></div>
-    <div class="row"><button id="copyRes" class="btn">Copy results</button><button id="newSess" class="btn ghost">New session</button></div>
+    <div class="row"><button id="copyRes" class="btn">Copy results</button><button id="tcx" class="btn">Export for Strava (.tcx)</button><button id="newSess" class="btn ghost">New session</button></div>
   </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.16.1/dist/mqtt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nosleep.js@0.12.0/dist/NoSleep.min.js"></script>
 <script>
 {
 const $=id=>document.getElementById(id);
 const U=n=>`ce06${n}-43e5-11e4-916c-0800200c9a66`;
 const S_DISC=U('0000'),S_INFO=U('0010'),S_CTRL=U('0020'),S_ROW=U('0030');
 const C_GEN=U('0031'),C_ADD=U('0032'),C_RATE=U('0034'),C_STR=U('0036');
+const PHONE=Math.random().toString(36).slice(2,8),QS=new URLSearchParams(location.search);
 const ergs=[];let nid=1,session=null,audio=null,wake=null;
-const PHONE=Math.random().toString(36).slice(2,8);
+const hist=new Map();
 
 const fmt=s=>{s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 const fmtPace=s=>{if(!s||!isFinite(s)||s>599)return '–:––';s=Math.round(s*10)/10;const m=Math.floor(s/60);return m+':'+(s-m*60).toFixed(1).padStart(4,'0')};
-const parseT=v=>{v=String(v).trim();if(v.includes(':')){const[a,b]=v.split(':');return(+a||0)*60+(+b||0)}return +v||0};
+/* "1:30", "130" and "90" all work: without a colon the last two digits are seconds */
+const parseT=v=>{v=String(v).trim();if(v.includes(':')){const[a,b]=v.split(':');return(+a||0)*60+(+b||0)}const d=v.replace(/\D/g,'');if(!d)return 0;return d.length<=2?+d:(+d.slice(0,-2))*60+(+d.slice(-2))};
 const watts=(t,d)=>d>5?2.8/((t/d)**3):0;
 const warn=msg=>{$('warn').textContent=msg;$('warn').hidden=!msg};
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* settings */
-const fields=['work','rest','reps','warm','lap'];
-try{const s=JSON.parse(localStorage.getItem('skierg-cfg')||'null');if(s)fields.forEach(f=>{if(s[f]!=null)$(f).value=s[f]})}catch(_){}
+const fields=['work','rest','reps','warm','lap'],KEY='skierg-cfg3';
+try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s)fields.forEach(f=>{if(s[f]!=null)$(f).value=s[f]})}catch(_){}
 const cfg=()=>{const c={work:parseT($('work').value),rest:parseT($('rest').value),reps:Math.max(1,Math.min(99,+$('reps').value||1)),warm:parseT($('warm').value)};
-  try{localStorage.setItem('skierg-cfg',JSON.stringify(Object.fromEntries(fields.map(f=>[f,$(f).value]))))}catch(_){}return c};
+  try{localStorage.setItem(KEY,JSON.stringify(Object.fromEntries(fields.map(f=>[f,$(f).value]))))}catch(_){}return c};
 const cfgText=c=>`${c.reps} × ${fmt(c.work)} / ${fmt(c.rest)}`+(c.warm?` · warm-up ${fmt(c.warm)}`:'');
-$('presets').addEventListener('click',ev=>{const p=ev.target.dataset.p;if(!p)return;const[w,r,n]=p.split(',');$('work').value=w;$('rest').value=r;$('reps').value=n;idleHeader()});
+const setCfg=c=>{$('work').value=fmt(c.work);$('rest').value=fmt(c.rest);$('reps').value=c.reps;$('warm').value=fmt(c.warm||0)};
+document.querySelectorAll('.tm,#pacerPace').forEach(i=>i.addEventListener('blur',()=>{i.value=fmt(parseT(i.value));idleHeader()}));
+$('presets').addEventListener('click',ev=>{const p=ev.target.dataset.p;if(!p)return;const[w,r,n]=p.split(',');setCfg({work:parseT(w),rest:parseT(r),reps:+n,warm:parseT($('warm').value)});cfg();idleHeader()});
 fields.forEach(f=>$(f).addEventListener('input',idleHeader));
+
+/* keep the screen on: wake lock where it exists, a silent looping video elsewhere (iPhone/Bluefy) */
+let ns=null;try{ns=new NoSleep()}catch(_){}
+document.addEventListener('click',()=>{initAudio();try{if(ns&&!ns.isEnabled)Promise.resolve(ns.enable()).catch(()=>{})}catch(_){}},true);
+async function lock(){try{wake=await navigator.wakeLock.request('screen')}catch(_){}}
+function release(){try{wake&&wake.release()}catch(_){}wake=null}
+
+/* fullscreen (Android; iPhone has no fullscreen for pages) */
+{const ok=document.fullscreenEnabled||document.webkitFullscreenEnabled;$('fs').hidden=!ok;
+$('fs').addEventListener('click',()=>{try{const d=document;if(d.fullscreenElement||d.webkitFullscreenElement)(d.exitFullscreen||d.webkitExitFullscreen).call(d);else{const el=d.documentElement,r=(el.requestFullscreen||el.webkitRequestFullscreen).call(el);r&&r.catch&&r.catch(()=>{})}}catch(_){}})}
+
+/* big-screen mode */
+const clean=v=>String(v||'').toLowerCase().replace(/[^a-z0-9æøå-]/g,'').slice(0,40);
+const WATCH=QS.has('se')?clean(QS.get('se'))||'?':''; // spectator mode: ?se=<spectator code>
+const setTV=(on,save=true)=>{document.body.classList.toggle('tv',on);setTimeout(()=>drawTrack(),0);$('tvBtn').textContent=on?'Leave big-screen mode':'Big-screen mode (tablet)';if(save)try{localStorage.setItem('skierg-tv',on?'1':'')}catch(_){}};
+if(WATCH){document.body.classList.add('watch');setTV(innerWidth>=700&&innerHeight>=400,false)}
+else{let on=QS.get('tv')==='1';try{on=on||localStorage.getItem('skierg-tv')==='1'}catch(_){}setTV(on)}
+$('tvBtn').addEventListener('click',()=>setTV(!document.body.classList.contains('tv')));
 
 /* erg cards */
 function addErg(o){
   const e=Object.assign({id:nid++,dist:null,raw:null,off:0,spm:0,hr:null,pace:0,w:0,last:0,iv:[],status:'connecting'},o);
   const a=document.createElement('article');a.className='erg';
-  a.innerHTML=`<div class="eh"><input class="nm" aria-label="Name" value="${e.name}"><button class="st"></button><button class="x" aria-label="Remove">×</button></div>
+  a.innerHTML=`<div class="eh"><input class="nm" aria-label="Name"><button class="st"></button><button class="x" aria-label="Remove">×</button></div>
   <div class="big"><span class="pace">–:––</span><small>/500 m</small></div>
   <div class="mets"><div><b class="w">–</b><small>watts</small></div><div><b class="spm">–</b><small>spm</small></div><div><b class="m">0</b><small class="ml">m total</small></div><div><b class="hr">–</b><small>bpm</small></div></div>
   <div class="last"></div>`;
   const q=s=>a.querySelector(s);
   e.el={a,pace:q('.pace'),w:q('.w'),spm:q('.spm'),m:q('.m'),ml:q('.ml'),hr:q('.hr'),last:q('.last'),st:q('.st'),nm:q('.nm')};
-  e.el.nm.addEventListener('input',()=>{e.name=e.el.nm.value});
+  e.el.nm.value=e.name;e.el.nm.addEventListener('input',()=>{e.name=e.el.nm.value});
   q('.x').addEventListener('click',()=>removeErg(e));
   e.el.st.addEventListener('click',()=>{if(e.dev&&e.status!=='live'){e.retries=0;gattSetup(e)}});
   $('ergs').appendChild(a);ergs.push(e);setStatus(e,e.status);
@@ -172,7 +237,7 @@ function removeErg(e){
   e.el.a.remove();ergs.splice(ergs.indexOf(e),1);
 }
 function setStatus(e,s){e.status=s;const t={live:'Live',connecting:'Connecting…',lost:'Reconnecting… tap',error:'Error – tap to retry'}[s]||s;
-  e.el.st.className='st '+s;e.el.st.textContent=e.demo?'Demo':t}
+  e.el.st.className='st '+s;e.el.st.textContent=e.pacer?'Pacer':e.demo?'Demo':t}
 
 /* data in */
 function setDist(e,raw){
@@ -183,7 +248,7 @@ function setDist(e,raw){
 function addAdd(e,spm,hr,pace){
   e.spm=spm;e.hr=hr;e.pace=pace;e.last=Date.now();
   const iv=e.iv[e.iv.length-1];
-  if(iv&&!iv.done&&spm>0){iv.ss+=spm;iv.sn++;if(hr)iv.hr=Math.max(iv.hr,hr)}
+  if(iv&&!iv.done&&spm>0&&!(session&&session.paused!=null)){iv.ss+=spm;iv.sn++;if(hr)iv.hr=Math.max(iv.hr,hr)}
 }
 const u24=(v,o)=>v.getUint8(o)|v.getUint8(o+1)<<8|v.getUint8(o+2)<<16;
 const onGen=(e,v)=>{if(v.byteLength>=6)setDist(e,u24(v,3)/10)};
@@ -191,7 +256,7 @@ const onAdd=(e,v)=>{if(v.byteLength<9)return;const hr=v.getUint8(6);addAdd(e,v.g
 const onStr=(e,v)=>{if(v.byteLength>=5){e.w=v.getUint16(3,true);e.last=Date.now()}};
 
 /* bluetooth */
-if(!navigator.bluetooth)warn('This browser has no Web Bluetooth. On Android use Chrome; on iPhone/iPad use the Bluefy browser. Demo ergs still work.');
+if(!navigator.bluetooth&&!document.body.classList.contains('tv'))warn('This browser has no Web Bluetooth. On Android use Chrome; on iPhone/iPad use the Bluefy browser. Pacers and big-screen mode still work.');
 $('addErg').addEventListener('click',async()=>{
   if(!navigator.bluetooth){warn('No Web Bluetooth here. Android: Chrome. iPhone/iPad: Bluefy.');return}
   let dev;
@@ -199,13 +264,13 @@ $('addErg').addEventListener('click',async()=>{
   catch(err){if(err.name==='SecurityError')warn('Bluetooth is blocked in this embedded view. Open the page directly in Chrome or Bluefy.');else if(err.name!=='NotFoundError')warn('Bluetooth: '+err.message);return}
   if(ergs.some(x=>x.dev&&x.dev.id===dev.id)){warn('That erg is already connected.');return}
   warn('');
-  const e=addErg({name:'Erg '+(ergs.length+1),dev});
+  const e=addErg({name:'Erg '+(ergs.filter(x=>!x.pacer).length+1),dev});
   e.el.last.textContent=dev.name||'';
   dev.addEventListener('gattserverdisconnected',()=>{if(e.removed)return;setStatus(e,'lost');retry(e)});
   gattSetup(e);
 });
 async function gattSetup(e){
-  setStatus(e,'connecting');
+  if(e.busy)return;e.busy=true;setStatus(e,'connecting');
   try{
     const srv=await e.dev.gatt.connect();
     const row=await srv.getPrimaryService(S_ROW);
@@ -216,16 +281,34 @@ async function gattSetup(e){
       await c.startNotifications(); // Android: one GATT op at a time
     }
     e.retries=0;setStatus(e,'live');
-  }catch(err){if(e.removed)return;setStatus(e,'error');retry(e)}
+  }catch(err){if(!e.removed){setStatus(e,'error');retry(e)}}
+  e.busy=false;
 }
-function retry(e){e.retries=(e.retries||0)+1;if(e.retries<=6)setTimeout(()=>{if(!e.removed&&!e.dev.gatt.connected)gattSetup(e)},2000)}
+function retry(e){e.retries=(e.retries||0)+1;clearTimeout(e.rt);e.rt=setTimeout(()=>{if(!e.removed&&!e.dev.gatt.connected)gattSetup(e)},Math.min(8000,1500*e.retries))}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')return;
+  ergs.forEach(e=>{if(e.dev&&!e.removed&&!e.dev.gatt.connected){e.retries=0;gattSetup(e)}});
+  if(session&&!session.done)lock()});
 
-/* demo erg */
+/* pacer: a virtual skier holding the chosen pace in every work rep */
+$('addPacer').addEventListener('click',()=>{
+  const pace=parseT($('pacerPace').value);if(pace<60||pace>400){warn('Pacer pace: type it as digits, e.g. 210 for 2:10.');return}
+  warn('');$('pacerPace').value=fmt(pace);
+  const e=addErg({name:'Pacer '+fmt(pace),pacer:true,tp:pace,status:'live',dist:0,raw:0});e.el.hr.textContent='–';e.el.last.textContent='Holds '+fmtPace(pace)+' /500 m in every work rep';
+});
+function updatePacers(now){
+  const p=session&&!session.done&&session.ph[session.idx],work=p&&p.type==='work';
+  for(const e of ergs){if(!e.pacer)continue;const sp=500/e.tp,iv=e.iv[e.iv.length-1];
+    e.last=Date.now();e.pace=work?e.tp:0;e.w=work?Math.round(2.8*sp**3):0;e.spm=0;
+    if(work&&iv&&!iv.done){const t=Math.max(0,Math.min(p.dur,(now-p.t0)/1000));e.raw=null;e.dist=iv.d0+t*sp}}
+}
+
+/* demo erg, only with ?demo=1 */
+if(QS.get('demo')==='1')$('addDemo').hidden=false;
 $('addDemo').addEventListener('click',()=>{
   const e=addErg({name:'Demo '+(ergs.length+1),demo:true,status:'live'});
   const k=0.9+Math.random()*0.2;let raw=0;
   e.timer=setInterval(()=>{
-    const p=session&&!session.done&&session.ph[session.idx],work=p&&p.type==='work';
+    const p=session&&!session.done&&session.paused==null&&session.ph[session.idx],work=p&&p.type==='work';
     const pace=(work?118:215)*k+(Math.random()-.5)*6,sp=500/pace;
     raw+=sp*0.5;setDist(e,raw);addAdd(e,Math.round((work?40:22)+Math.random()*3),Math.round(work?165:130),pace);e.w=Math.round(2.8*sp**3);
   },500);
@@ -235,75 +318,102 @@ $('addDemo').addEventListener('click',()=>{
 function build(c,start,created){
   const ph=[];let t=start;const add=(type,dur,i)=>{if(dur>0){ph.push({type,dur,i,t0:t});t+=dur*1000}};
   add('warm',c.warm,0);for(let i=1;i<=c.reps;i++){add('work',c.work,i);if(i<c.reps)add('rest',c.rest,i)}
-  return{c,ph,start,created,end:t,idx:-1,lastSec:null};
+  return{c,ph,start,created,end:t,idx:-1,lastSec:null,paused:null,q:Math.floor(Math.random()*99)};
 }
-function begin(start,c=cfg(),sid=PHONE+'-'+start,bc=true){
+function begin(start,c=cfg(),sid=PHONE+'-'+start,bc=true,created=Date.now()){
   if(!c.work){warn('Set a work time.');return}
   initAudio();
-  ergs.forEach(e=>{e.iv=[]});hist.clear();
-  session=build(c,start,Date.now());session.sid=sid;
-  if(bc)pub('c',{t:'start',start,c,sid});
-  $('setup').hidden=true;$('results').hidden=true;$('runRow').hidden=false;lock();
+  ergs.forEach(e=>{e.iv=[];e.smp=[]});hist.clear();
+  session=build(c,start,Math.min(created,start));session.sid=sid;
+  if(bc)pub('c',{t:'start',start,c,sid,created:session.created});
+  $('setup').hidden=true;$('results').hidden=true;$('runRow').hidden=false;$('pause').textContent='Pause';lock();
 }
 $('startNow').addEventListener('click',()=>begin(Date.now()+10000));
 const nextMin=()=>Math.ceil((Date.now()+20000)/60000)*60000;
 $('startMin').addEventListener('click',()=>begin(nextMin()));
-let stopArm=0;
 function initAudio(){try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();audio.resume()}catch(_){}}
-document.addEventListener('pointerdown',initAudio);
+let stopArm=0;
 $('stop').addEventListener('click',()=>{if(Date.now()-stopArm<3000){const sid=session&&session.sid;finish();pub('c',{t:'stop',sid});return}stopArm=Date.now();$('stop').textContent='Tap again to stop';setTimeout(()=>$('stop').textContent='Stop session',3000)});
+$('pause').addEventListener('click',()=>{
+  if(!session||session.done)return;
+  if(session.paused==null){const at=Date.now();pauseAt(at);pub('c',{t:'pause',sid:session.sid,at})}
+  else{const shift=Date.now()-session.paused;resume(shift);pub('c',{t:'resume',sid:session.sid,shift})}
+});
+function pauseAt(at){if(!session||session.done||session.paused!=null)return;session.paused=at;$('pause').textContent='Resume';beep(440,.3)}
+function resume(shift){
+  if(!session||session.paused==null)return;
+  session.start+=shift;session.end+=shift;session.created+=shift;session.ph.forEach(p=>p.t0+=shift);
+  ergs.forEach(e=>e.iv.forEach(iv=>{if(!iv.done)iv.t0+=shift}));
+  session.paused=null;$('pause').textContent='Pause';beep(880,.3);
+}
 $('newSess').addEventListener('click',()=>{session=null;$('results').hidden=true;$('setup').hidden=false;ergs.forEach(e=>{e.iv=[]});idleHeader()});
 
 function enterWork(e,p){e.iv.push({i:p.i,d0:e.dist,ss:0,sn:0,hr:0,t0:p.t0,dur:p.dur})}
-function exitWork(e,now){const iv=e.iv[e.iv.length-1];if(!iv||iv.done)return;iv.done=true;iv.t=Math.min(iv.dur,(now-iv.t0)/1000);iv.d=e.dist!=null&&iv.d0!=null?e.dist-iv.d0:0}
-function change(from,to,now){
+function exitWork(e,now){
+  const iv=e.iv[e.iv.length-1];if(!iv||iv.done)return;iv.done=true;iv.t=Math.max(0,Math.min(iv.dur,(now-iv.t0)/1000));
+  iv.d=e.pacer?iv.t*500/e.tp:e.dist!=null&&iv.d0!=null?e.dist-iv.d0:0;
+  if(e.pacer)e.dist=iv.d0+iv.d;else keep(PHONE+'-'+e.id,e.name,iv.i,iv.d);
+}
+function change(from,to){
   for(let k=from;k<to;k++){
     if(k>=0&&session.ph[k].type==='work')ergs.forEach(e=>exitWork(e,session.ph[k].t0+session.ph[k].dur*1000));
     const n=session.ph[k+1];if(n&&n.type==='work')ergs.forEach(e=>enterWork(e,n));
   }
-  session.idx=to;beep(to>=0&&session.ph[to].type==='work'?880:520,.6);try{navigator.vibrate&&navigator.vibrate(400)}catch(_){}
+  session.idx=to;beep(to>=0&&session.ph[to].type==='work'?880:520,.6);try{!WATCH&&navigator.vibrate&&navigator.vibrate(400)}catch(_){}
 }
 function finish(){
-  if(!session||session.done)return;const now=Date.now();
-  ergs.forEach(e=>exitWork(e,now));session.done=true;session.idx=-1;
+  if(!session||session.done)return;const now=session.paused??Date.now();
+  ergs.forEach(e=>exitWork(e,now));session.done=true;session.paused=null;session.idx=-1;
   beep(990,1);$('runRow').hidden=true;$('stop').textContent='Stop session';
   showResults();release();setTimeout(()=>{if(session&&session.done)showResults()},1500); // late remote results
-  const h=$('phase');h.className='phase done';$('phLabel').textContent='Done';$('phTime').textContent=fmt(0);$('phBar').style.width='100%';$('phSub').textContent=cfgText(session.c);
+  $('phase').className='phase done';$('phLabel').textContent='Done';$('phTime').textContent=fmt(0);$('phBar').style.width='100%';$('phSub').textContent=cfgText(session.c);$('quote').textContent='';$('tvQ').textContent='';
 }
-function beep(f,d){try{if(!audio)return;const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime;o.type='square';o.frequency.value=f;g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(audio.destination);o.start(t);o.stop(t+d)}catch(_){}}
-async function lock(){try{wake=await navigator.wakeLock.request('screen')}catch(_){}}
-function release(){try{wake&&wake.release()}catch(_){}wake=null}
-document.addEventListener('visibilitychange',()=>{if(session&&!session.done&&document.visibilityState==='visible')lock()});
+function beep(f,d){try{if(!audio||WATCH)return;const o=audio.createOscillator(),g=audio.createGain(),t=audio.currentTime;o.type='square';o.frequency.value=f;g.gain.setValueAtTime(.25,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(audio.destination);o.start(t);o.stop(t+d)}catch(_){}}
+
+/* one quote from halfway through each work rep over 1 min; "Gi gass!" for the last 10/20/30 s depending on rep length */
+const QUOTES=['Det er i motbakke det går oppover','Barneskirenn!','Bruk magen, ikke bare armene!','Du er sterkere enn du tror','Det er nå det avgjøres','Ingen har angret på et fullført drag','Hold farten – snart pause!','Kroppen klarer det. Overbevis hodet.','Smerte er midlertidig, stolthet varer','Trekk lenger, trekk hardere!','Bare litt til!','Dette er draget du blir bedre av'];
+function quoteFor(p,left){
+  if(!p||p.type!=='work'||left>p.dur/2)return '';
+  const gg=p.dur<=60?10:p.dur<=240?20:30;
+  if(left<=gg)return 'Gi gass!';
+  return p.dur>60&&left>p.dur/2-30?QUOTES[(session.q+p.i)%QUOTES.length]:''; // one quote for 30 s from halfway, only on reps over 1 min
+}
 
 /* render */
 function idleHeader(){
-  if(session)return;const c=cfg();
-  $('phase').className='phase';$('phLabel').textContent='Ready';$('phSub').textContent=cfgText(c);
+  if(session)return;
+  if(WATCH){$('phase').className='phase';$('phLabel').textContent='Live view';$('phSub').textContent='';$('phTime').textContent='–:––';$('quote').textContent='';$('tvQ').textContent='';$('phBar').style.width='0';return}
+  const c=cfg();
+  $('phase').className='phase';$('phLabel').textContent='Ready';$('phSub').textContent=cfgText(c);$('quote').textContent='';$('tvQ').textContent='';
   $('phTime').textContent=fmt(c.warm+c.reps*c.work+(c.reps-1)*c.rest);$('phBar').style.width='0';
 }
 function tick(){
-  const now=Date.now();
+  const real=Date.now();
   const d=new Date(nextMin());$('minLbl').textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   let p=null;
   if(session&&!session.done){
+    const now=session.paused??real;
     if(now>=session.end){finish()}
     else{
       let idx=-1;if(now>=session.start)idx=session.ph.findIndex(x=>now<x.t0+x.dur*1000);
-      if(idx!==session.idx)change(session.idx,idx,now);
-      p=idx<0?{type:'count',t0:session.created,dur:(session.start-session.created)/1000}:session.ph[idx];
-      const left=(p.t0+p.dur*1000-now)/1000,sec=Math.ceil(left);
-      if(sec!==session.lastSec){session.lastSec=sec;if(sec>=1&&sec<=3)beep(660,.12)}
-      const n=session.c.reps;
-      $('phase').className='phase '+p.type;
-      $('phLabel').textContent=p.type==='count'?'Starting in':p.type==='warm'?'Warm-up':p.type==='work'?`Work ${p.i}/${n}`:`Rest · next ${p.i+1}/${n}`;
+      if(idx!==session.idx)change(session.idx,idx);
+      p=idx<0?{type:'count',t0:session.created,dur:Math.max(1,(session.start-session.created)/1000)}:session.ph[idx];
+      updatePacers(now);
+      if(!ps0()&&idx>=0&&real-(session.lastRec||0)>=1000){session.lastRec=real;record(real,idx)}
+      const left=(p.t0+p.dur*1000-now)/1000,sec=Math.ceil(left),n=session.c.reps,ps=session.paused!=null;
+      if(!ps&&sec!==session.lastSec){session.lastSec=sec;if(sec>=1&&sec<=3)beep(660,.12)}
+      $('phase').className='phase '+(ps?'paused':p.type);
+      const lbl=p.type==='count'?'Starting in':p.type==='warm'?'Warm-up':p.type==='work'?`Work ${p.i}/${n}`:`Rest · next ${p.i+1}/${n}`;
+      $('phLabel').textContent=ps?'Paused · '+lbl:lbl;
       $('phSub').textContent=p.type==='count'?cfgText(session.c):`ends ${fmt((session.end-now)/1000)}`;
       $('phTime').textContent=fmt(left);
       $('phBar').style.width=Math.min(100,100*(1-left/p.dur))+'%';
+      const q=ps?'':quoteFor(p,left);if($('quote').textContent!==q){$('quote').textContent=q;$('tvQ').textContent=q}
     }
   }
   const work=p&&p.type==='work';let lead=null,best=-1;
   for(const e of ergs){
-    const fresh=now-e.last<3000,iv=e.iv[e.iv.length-1];
+    const fresh=real-e.last<3000,iv=e.iv[e.iv.length-1];
     e.el.pace.textContent=fresh?fmtPace(e.pace):'–:––';
     e.el.w.textContent=fresh&&e.w?e.w:'–';
     e.el.spm.textContent=fresh&&e.spm?e.spm:'–';
@@ -314,35 +424,86 @@ function tick(){
     if(l)e.el.last.textContent=`Rep ${l.i}: ${Math.round(l.d)} m · ${fmtPace(l.d>5?l.t/(l.d/500):0)} · ${Math.round(watts(l.t,l.d))} W`;
   }
   ergs.forEach(e=>e.el.a.classList.toggle('lead',ergs.length>1&&e===lead&&best>0));
-  renderLoop(p,now);
+  renderLoop(p,session&&session.paused!=null?session.paused:real,real);
 }
+
+/* results */
 function rows(e){
   const dn=e.iv.filter(x=>x.done&&x.t>0);let D=0,T=0,S=0,N=0;
   const r=dn.map(x=>{D+=x.d;T+=x.t;S+=x.ss;N+=x.sn;return[x.i,Math.round(x.d),fmtPace(x.d>5?x.t/(x.d/500):0),Math.round(watts(x.t,x.d)),x.sn?Math.round(x.ss/x.sn):'–',x.hr||'–']});
   return{r,tot:['Total',Math.round(D),fmtPace(D>5?T/(D/500):0),Math.round(watts(T,D)),N?Math.round(S/N):'–','']};
 }
+function groupList(){
+  const w=session?session.c.work:0;
+  return[...hist.values()].map(h=>{const r=Object.entries(h.r).filter(([,d])=>d!=null),D=r.reduce((a,[,d])=>a+d,0),T=r.length*w;
+    return{n:h.n,r:h.r,D,k:r.length,pace:D>5?T/(D/500):0,w:Math.round(watts(T,D))}}).sort((a,b)=>(a.pace||999)-(b.pace||999));
+}
 function showResults(){
-  const hd=['Rep','m','/500 m','W','spm','HR max'];
-  $('resBody').innerHTML=ergs.map(e=>{const{r,tot}=rows(e);
-    return `<h3></h3><div class="scroll"><table><thead><tr>${hd.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${r.map(x=>`<tr>${x.map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr>${tot.map(v=>`<td>${v}</td>`).join('')}</tr></tfoot></table></div>`}).join('')||'<p>No ergs connected.</p>';
-  [...$('resBody').querySelectorAll('h3')].forEach((h,i)=>h.textContent=ergs[i].name);
-  groupTable();
+  const hd=['Rep','m','/500 m','W','spm','HR max'],own=ergs.filter(e=>!e.pacer);
+  let h=own.map((e,i)=>{const{r,tot}=rows(e);
+    return `<h3 data-i="${i}"></h3><div class="scroll"><table><thead><tr>${hd.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${r.map(x=>`<tr>${x.map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr>${tot.map(v=>`<td>${v}</td>`).join('')}</tr></tfoot></table></div>`}).join('');
+  if(hist.size>=2||(!own.length&&hist.size)){
+    const n=session.c.reps,reps=[...Array(n)].map((_,i)=>i+1);
+    h=`<h3>Group</h3><div class="scroll"><table><thead><tr><th>Skier</th>${reps.map(r=>`<th>${r}</th>`).join('')}<th>Total</th><th>/500 m</th><th>W</th></tr></thead><tbody>${groupList().map(s=>`<tr><td>${esc(s.n)}</td>${reps.map(r=>`<td>${s.r[r]!=null?Math.round(s.r[r]):'–'}</td>`).join('')}<td>${Math.round(s.D)}</td><td>${fmtPace(s.pace)}</td><td>${s.w||'–'}</td></tr>`).join('')}</tbody></table></div>`+h;
+  }
+  $('resBody').innerHTML=h||'<p>No results.</p>';
+  $('resBody').querySelectorAll('h3[data-i]').forEach(x=>x.textContent=own[+x.dataset.i].name);
   $('results').hidden=false;
 }
+/* Strava export: one TCX per erg on this device, one lap per warm-up/work/rest phase */
+const ps0=()=>session&&session.paused!=null;
+function record(t,idx){for(const e of ergs){if(e.pacer||e.dist==null)continue;(e.smp=e.smp||[]).push({t,d:e.dist,hr:Date.now()-e.last<3000?e.hr:null,spm:e.spm,w:e.w,ph:idx})}}
+const iso=t=>new Date(t).toISOString().replace(/\.\d+Z$/,'Z');
+const xesc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function tcx(e){
+  const S=e.smp||[];if(S.length<2||!session)return null;
+  const d0=S[0].d,laps=[];
+  for(const x of S){let L=laps[laps.length-1];if(!L||L.ph!==x.ph)laps.push(L={ph:x.ph,pts:[]});L.pts.push(x)}
+  const tp=x=>`<Trackpoint><Time>${iso(x.t)}</Time><DistanceMeters>${(x.d-d0).toFixed(1)}</DistanceMeters>${x.hr?`<HeartRateBpm><Value>${x.hr}</Value></HeartRateBpm>`:''}${x.spm?`<Cadence>${Math.min(254,x.spm)}</Cadence>`:''}<Extensions><TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2"><Watts>${Math.round(x.w||0)}</Watts></TPX></Extensions></Trackpoint>`;
+  const body=laps.map((L,k)=>{
+    const ph=session.ph[L.ph]||{},a=L.pts[0],nx=laps[k+1]?laps[k+1].pts[0]:L.pts[L.pts.length-1];
+    const seq=[...L.pts,...(laps[k+1]?[nx]:[])],T=Math.max(1,seq.reduce((s,x,i)=>i?s+Math.min(1.5,(x.t-seq[i-1].t)/1000):s,0)), /* pauses left out */D=Math.max(0,nx.d-a.d),hrs=L.pts.map(x=>x.hr).filter(Boolean),W=L.pts.reduce((s,x)=>s+(x.w||0),0)/L.pts.length;
+    const cal=Math.round((4*0.8604*watts(T,D)+300)*T/3600),cad=L.pts.map(x=>x.spm).filter(Boolean);
+    return `<Lap StartTime="${iso(a.t)}"><TotalTimeSeconds>${T.toFixed(1)}</TotalTimeSeconds><DistanceMeters>${D.toFixed(1)}</DistanceMeters><MaximumSpeed>${(Math.max(...L.pts.map((x,i)=>i?(x.d-L.pts[i-1].d)/Math.max(.5,(x.t-L.pts[i-1].t)/1000):0))).toFixed(2)}</MaximumSpeed><Calories>${cal}</Calories>${hrs.length?`<AverageHeartRateBpm><Value>${Math.round(hrs.reduce((a,b)=>a+b)/hrs.length)}</Value></AverageHeartRateBpm><MaximumHeartRateBpm><Value>${Math.max(...hrs)}</Value></MaximumHeartRateBpm>`:''}<Intensity>${ph.type==='rest'?'Resting':'Active'}</Intensity>${cad.length?`<Cadence>${Math.round(cad.reduce((a,b)=>a+b)/cad.length)}</Cadence>`:''}<TriggerMethod>Manual</TriggerMethod><Track>${L.pts.map(tp).join('')}</Track><Notes>${xesc(ph.type==='work'?'Work '+ph.i:ph.type==='rest'?'Rest '+ph.i:'Warm-up')}</Notes><Extensions><LX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2"><AvgWatts>${Math.round(W)}</AvgWatts></LX></Extensions></Lap>`}).join('');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><Activities><Activity Sport="Other"><Id>${iso(S[0].t)}</Id>${body}<Notes>${xesc('SkiErg '+cfgText(session.c)+' – '+e.name)}</Notes><Creator xsi:type="Device_t"><Name>Concept2 SkiErg PM5</Name><UnitId>0</UnitId><ProductID>0</ProductID><Version><VersionMajor>1</VersionMajor><VersionMinor>0</VersionMinor></Version></Creator></Activity></Activities></TrainingCenterDatabase>`;
+}
+$('tcx').addEventListener('click',async()=>{
+  const own=ergs.filter(e=>!e.pacer),files=[];
+  for(const e of own){const x=tcx(e);if(!x)continue;const t=new Date(e.smp[0].t),p=n=>String(n).padStart(2,'0');
+    files.push(new File([x],`skierg-${t.getFullYear()}-${p(t.getMonth()+1)}-${p(t.getDate())}-${p(t.getHours())}${p(t.getMinutes())}-${(e.name||'erg').replace(/[^\wæøåÆØÅ-]+/g,'_')}.tcx`,{type:'application/vnd.garmin.tcx+xml'}))}
+  if(!files.length){$('tcx').textContent='No erg data to export';setTimeout(()=>$('tcx').textContent='Export for Strava (.tcx)',2500);return}
+  const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  if(ios&&navigator.canShare&&navigator.canShare({files})){try{await navigator.share({files});return}catch(err){if(err.name==='AbortError')return}}
+  for(const f of files){const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
+  $('tcx').textContent='Saved – upload at strava.com/upload/select';setTimeout(()=>$('tcx').textContent='Export for Strava (.tcx)',5000);
+});
 $('copyRes').addEventListener('click',async()=>{
-  const d=new Date(),txt=[`SkiErg ${d.toLocaleDateString()} – ${cfgText(session?session.c:cfg())}`];
-  ergs.forEach(e=>{const{r,tot}=rows(e);txt.push('',e.name,...r.map(x=>`#${x[0]}  ${x[1]} m  ${x[2]}  ${x[3]} W  ${x[4]} spm`),`Total ${tot[1]} m  ${tot[2]}  ${tot[3]} W`)});
+  const d=new Date(),c=session?session.c:cfg(),txt=[`SkiErg ${d.toLocaleDateString()} – ${cfgText(c)}`];
+  const g=groupList();
+  if(g.length){txt.push('','Group (m per rep):');g.forEach((s,i)=>txt.push(`${i+1}. ${s.n}: ${Object.keys(s.r).sort((a,b)=>a-b).map(r=>Math.round(s.r[r])).join(' · ')} = ${Math.round(s.D)} m, ${fmtPace(s.pace)}, ${s.w} W${s.k<c.reps?` (${s.k} of ${c.reps} reps)`:''}`))}
+  ergs.filter(e=>!e.pacer).forEach(e=>{const{r,tot}=rows(e);txt.push('',e.name,...r.map(x=>`#${x[0]}  ${x[1]} m  ${x[2]}  ${x[3]} W  ${x[4]} spm`),`Total ${tot[1]} m  ${tot[2]}  ${tot[3]} W`)});
   try{await navigator.clipboard.writeText(txt.join('\n'));$('copyRes').textContent='Copied'}catch(_){$('copyRes').textContent='Copy blocked'}
   setTimeout(()=>$('copyRes').textContent='Copy results',2000);
 });
+
 /* group sync over MQTT: every phone publishes its own skiers, everyone draws all of them */
 const BASE='skierg-loop-v1';
-const BROKER=new URLSearchParams(location.search).get('broker')||'wss://broker.emqx.io:8084/mqtt';
-let cli=null,room='';const remote=new Map(),phones=new Map(),hist=new Map(),colors=new Map();
+const BROKER=QS.get('broker')||'wss://broker.emqx.io:8084/mqtt';
+let cli=null,room='';const remote=new Map(),phones=new Map(),colors=new Map();
 const PAL=['#ff4521','#1f6fff','#18a058','#f5a524','#b14cff','#00a7c4','#e0457b','#6b7a00'];
-const col=id=>{if(!colors.has(id))colors.set(id,PAL[colors.size%PAL.length]);return colors.get(id)};
-const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function pub(k,o){if(cli&&cli.connected&&room)try{cli.publish(`${BASE}/${room}/${k}`,JSON.stringify(Object.assign({p:PHONE},o)))}catch(_){}}
+const col=id=>colors.get(id)||PAL[0]; // same colour on every device: by sorted skier id
+let wcode='';try{wcode=clean(localStorage.getItem('skierg-watch'))}catch(_){}
+function pub(k,o){if(WATCH||!cli||!cli.connected)return;const msg=JSON.stringify(Object.assign({p:PHONE},o));
+  try{if(room)cli.publish(`${BASE}/${room}/${k}`,msg);if(wcode)cli.publish(`${BASE}/w/${wcode}/${k}`,msg)}catch(_){}}
+function setW(v,save=true){wcode=clean(v);$('wcode').value=wcode;if(save)try{localStorage.setItem('skierg-watch',wcode)}catch(_){}
+  $('wlinkTxt').textContent=wcode?'Friends open: '+wlink():'';if(wcode&&!room&&window.mqtt&&!cli)connectOnly()}
+const wlink=()=>location.origin+location.pathname+'?se='+encodeURIComponent(wcode);
+$('wcode').addEventListener('change',()=>setW($('wcode').value));
+$('wlink').addEventListener('click',async()=>{setW($('wcode').value);if(!wcode){$('wcode').focus();return}
+  try{await navigator.clipboard.writeText(wlink());$('wlink').textContent='Link copied'}catch(_){$('wlink').textContent='Copy blocked – see link below'}
+  setTimeout(()=>$('wlink').textContent='Copy spectator link',2500)});
+function connectOnly(){ // a phone with a spectator code but no group code still needs the broker
+  cli=mqtt.connect(BROKER,{clientId:'sk'+PHONE+Math.random().toString(36).slice(2,6),clean:true,connectTimeout:8000,reconnectPeriod:3000,keepalive:20})}
 function joinRoom(r){
   r=String(r||'').toLowerCase().replace(/[^a-z0-9-]/g,'').slice(0,40);$('room').value=r;
   if(r===room&&(cli||!r))return;room=r;
@@ -350,77 +511,110 @@ function joinRoom(r){
   try{history.replaceState(null,'',location.pathname+location.search+(r?'#'+r:''))}catch(_){}
   if(cli){try{cli.end(true)}catch(_){}cli=null}
   remote.clear();phones.clear();
-  if(!r||!window.mqtt)return;
+  if(!r){if(wcode&&window.mqtt)connectOnly();return}
+  if(!window.mqtt)return;
   const c=mqtt.connect(BROKER,{clientId:'sk'+PHONE+Math.random().toString(36).slice(2,6),clean:true,connectTimeout:8000,reconnectPeriod:3000,keepalive:20});
   cli=c;
   c.on('connect',()=>c.subscribe(`${BASE}/${room}/#`));
   c.on('message',(t,b)=>{let m;try{m=JSON.parse(b.toString())}catch(_){return}if(!m||m.p===PHONE)return;onMsg(t.endsWith('/c')?'c':'s',m)});
 }
+function adopt(m){ // join a session another phone is running
+  if(!m.c||!m.sid)return;const now=Date.now();
+  if(session&&(session.sid===m.sid||!session.done))return;
+  if(build(m.c,m.start,now).end<=(m.paused??now))return;
+  setCfg(m.c);begin(m.start,m.c,m.sid,false,m.created||now);if(m.paused!=null)pauseAt(m.paused);
+}
 function onMsg(k,m){
   const now=Date.now();
-  if(k==='s'){phones.set(m.p,now);for(const s of m.k||[]){if(!s||!s.id)continue;s.at=now;remote.set(s.id,s);if(s.lr&&session&&s.sid===session.sid)keep(s.id,s.n,s.lr,s.ld)}}
-  else if(m.t==='start'&&m.c&&(!session||session.done||session.sid!==m.sid)){
-    if(build(m.c,m.start,now).end<=now)return;
-    $('work').value=fmt(m.c.work);$('rest').value=fmt(m.c.rest);$('reps').value=m.c.reps;$('warm').value=fmt(m.c.warm||0);
-    begin(m.start,m.c,m.sid,false);
+  if(k==='s'){
+    phones.set(m.p,now);if(!WATCH&&m.wc&&!wcode)setW(m.wc);
+    for(const s of m.k||[]){if(!s||!s.id)continue;s.at=now;remote.set(s.id,s);
+      if(!s.pc&&s.h&&session&&s.sid===session.sid)for(const r in s.h)keep(s.id,s.n,+r,s.h[r])}
+    if(m.ss)adopt(m.ss);
   }
-  else if(m.t==='stop'&&session&&!session.done&&session.sid===m.sid)finish();
+  else if(m.t==='start'){if(!session||session.done||session.sid!==m.sid){if(session&&!session.done)session.done=true;adopt(m)}}
+  else if(!session||session.sid!==m.sid)return;
+  else if(m.t==='stop')finish();
+  else if(m.t==='pause')pauseAt(m.at);
+  else if(m.t==='resume')resume(m.shift);
 }
 function keep(id,n,r,d){if(d==null)return;const h=hist.get(id)||{n,r:{}};h.n=n;h.r[r]=d;hist.set(id,h)}
 function snap(e){
-  const now=Date.now(),iv=e.iv[e.iv.length-1],dn=e.iv.filter(x=>x.done),l=dn[dn.length-1];
+  const now=Date.now(),iv=e.iv[e.iv.length-1],dn=e.iv.filter(x=>x.done),l=dn[dn.length-1],fresh=now-e.last<3000;
   return{id:PHONE+'-'+e.id,n:e.name,d:iv&&!iv.done&&e.dist!=null&&iv.d0!=null?Math.round((e.dist-iv.d0)*10)/10:null,
-    lr:l?l.i:0,ld:l?Math.round(l.d*10)/10:null,pace:now-e.last<3000?e.pace:0,sid:session?session.sid:null};
+    lr:l?l.i:0,ld:l?Math.round(l.d*10)/10:null,pace:fresh?e.pace:0,w:fresh?e.w:0,spm:fresh?e.spm:0,pc:e.pacer?1:0,
+    h:Object.fromEntries(dn.map(x=>[x.i,Math.round(x.d*10)/10])),sid:session?session.sid:null};
 }
-setInterval(()=>{if(ergs.length)pub('s',{k:ergs.map(snap)})},500);
+setInterval(()=>{
+  const live=session&&!session.done?{start:session.start,c:session.c,sid:session.sid,created:session.created,paused:session.paused}:null;
+  if(ergs.length||live)pub('s',{k:ergs.map(snap),ss:live,wc:wcode||undefined});
+},500);
 $('room').addEventListener('change',()=>joinRoom($('room').value));
 $('room').addEventListener('keydown',ev=>{if(ev.key==='Enter')$('room').blur()});
 
 /* the loop */
-const NS='http://www.w3.org/2000/svg',LANES=5,lanes=[],dots=new Map();
-{
-  const t=$('track');let h='';
-  for(let k=0;k<LANES;k++){const i=k*12,T=24+i,B=176-i,r=76-i;h+=`<path class="lane" d="M200,${T} H290 A${r},${r} 0 0 1 290,${B} H110 A${r},${r} 0 0 1 110,${T} Z"/>`}
-  h+=`<line class="sl" x1="200" y1="14" x2="200" y2="${24+(LANES-1)*12+10}"/><text class="ttl" x="200" y="100" id="lpT"></text><text class="sub" x="200" y="121" id="lpS"></text>`;
-  t.innerHTML=h;t.querySelectorAll('.lane').forEach(p=>lanes.push({p,L:p.getTotalLength()}));
+const NS='http://www.w3.org/2000/svg',LANES=5,lanes=[],dots=new Map();let trkKey='';
+/* phone: fixed 2:1 track; big screen: track stretched to the space left, leaderboard in the infield */
+function drawTrack(){
+  const t=$('track'),tv=document.body.classList.contains('tv'),bx=$('loop').getBoundingClientRect();
+  const VW=tv&&bx.width>0&&bx.height>0?Math.max(320,200*bx.width/bx.height):400,R0=tv?88:76,sp=tv?9:13,sw=tv?8:11,top=100-R0,m=tv?12:34;
+  const key=[tv,Math.round(VW)].join();if(key===trkKey)return;trkKey=key;
+  const xa=m+R0,xb=VW-m-R0,cx=VW/2;let h='';
+  for(let k=0;k<LANES;k++){const i=k*sp,T=top+i,B=200-top-i,r=R0-i;h+=`<path class="lane" style="stroke-width:${sw}" d="M${cx},${T} H${xb} A${r},${r} 0 0 1 ${xb},${B} H${xa} A${r},${r} 0 0 1 ${xa},${T} Z"/>`}
+  h+=`<line class="sl" x1="${cx}" y1="${top-10}" x2="${cx}" y2="${top+(LANES-1)*sp+(tv?sw/2:10)}"/><text class="ttl" x="${cx}" y="99" id="lpT"></text><text class="sub" x="${cx}" y="117" id="lpS"></text>`;
+  t.setAttribute('viewBox',`0 0 ${VW} 200`);t.innerHTML=h;dots.clear();lanes.length=0;
+  t.querySelectorAll('.lane').forEach(p=>lanes.push({p,L:p.getTotalLength()}));
+  const lb=$('lb');
+  if(tv){const ir=R0-(LANES-1)*sp-sw/2,y0=100-ir+4,x0=xa-ir*0.55;
+    Object.assign(lb.style,{top:y0/2+'%',bottom:y0/2+'%',left:100*x0/VW+'%',right:100*x0/VW+'%'})}
+  else lb.removeAttribute('style');
 }
-function renderLoop(p,now){
-  const all=[...ergs.map(e=>Object.assign(snap(e),{me:1})),...[...remote.values()].filter(s=>now-s.at<5000)];
-  [...phones].forEach(([k,t])=>{if(now-t>6000)phones.delete(k)});
-  const gs=!room?'No group code: only skiers on this phone are shown.':!window.mqtt?'Group sync unavailable (could not load, check internet).':
-    cli&&cli.connected?`Group “${room}” · ${phones.size+1} phone${phones.size?'s':''} connected`:`Connecting to group “${room}”…`;
-  document.querySelectorAll('.gs').forEach(x=>x.textContent=gs);
-  $('loop').hidden=all.length<2;if(all.length<2)return;
-  const type=p?p.type:session&&session.done?'done':'idle',lap=Math.max(20,+$('lap').value||100);
+drawTrack();
+new ResizeObserver(()=>{if(document.body.classList.contains('tv'))drawTrack()}).observe($('loop'));
+function renderLoop(p,now,real){
+  const all=[...ergs.map(e=>Object.assign(snap(e),{me:1})),...[...remote.values()].filter(s=>real-s.at<5000)];
+  [...phones].forEach(([k,t])=>{if(real-t>6000)phones.delete(k)});
+  const gs=WATCH?(WATCH==='?'?'':!window.mqtt?'Could not load live data, check internet.':!(cli&&cli.connected)?`Connecting to “${WATCH}”…`:all.length?`Watching “${WATCH}” live`:`Watching “${WATCH}” · waiting for the skiers`):!room?'No group code: only skiers on this device are shown.':!window.mqtt?'Group sync unavailable (could not load, check internet).':
+    cli&&cli.connected?`Group “${room}” · ${phones.size+1} device${phones.size?'s':''} connected`:`Connecting to group “${room}”…`;
+  document.querySelectorAll('.gs').forEach(x=>{if(x.textContent!==gs)x.textContent=gs});
+  const tv=document.body.classList.contains('tv'),show=all.length>=2||tv||(WATCH&&WATCH!=='?');
+  $('loop').hidden=!show;if(!show)return;
+  const type=p?p.type:session&&session.done?'done':'idle',lap=Math.max(20,+$('lap').value||400);
   const R=Math.max(0,...all.map(s=>s.lr||0));let val,title;
   if(type==='work'){val=s=>s.d??0;title=`Rep ${p.i} · live`}
   else if((type==='rest'||type==='done')&&R){val=s=>s.lr===R?s.ld??0:0;title=`Rep ${R} result`}
-  else{val=()=>0;title='On the start line'}
-  const ord=[...all].sort((a,b)=>val(b)-val(a)),top=val(ord[0]);
+  else{val=()=>0;title=all.length?'On the start line':'Waiting for skiers'}
+  const stable=[...all].sort((a,b)=>a.id<b.id?-1:1);colors.clear();stable.forEach((s,k)=>colors.set(s.id,PAL[k%PAL.length]));
+  const ord=[...all].sort((a,b)=>val(b)-val(a)),top=ord.length?val(ord[0]):0;
   const work=session?session.c.work:0;
-  $('lpT').textContent=title;$('lpS').textContent=top>0?`${Math.round(top)} m · lap ${Math.floor(top/lap)+1}`:`${lap} m loop`;
-  $('board').innerHTML=ord.map((s,i)=>{const v=val(s),pc=type==='work'?s.pace:v>5&&work?work/(v/500):0;
-    return `<div class="br${s.me?' me':''}"><i class="c" style="background:${col(s.id)}"></i><span class="n">${i+1}. ${esc(s.n)}</span><span class="v">${Math.round(v)} m</span><span class="g">${i&&top>0?'−'+Math.round(top-v)+' m':''}</span><span class="v">${fmtPace(pc)}</span></div>`}).join('');
-  const ids=new Set(all.map(s=>s.id)),stable=[...all].sort((a,b)=>a.id<b.id?-1:1);
+  const sub=top>0?`${Math.round(top)} m · lap ${Math.floor(top/lap)+1}`:`${lap} m loop`;
+  if(!$('lpT'))drawTrack();$('lpT').textContent=title;$('lpS').textContent=sub;$('tvT').textContent=title+' · '+sub;
+  const head=`<div class="br bh"><i></i><span>Skier</span><span class="v">m</span><span class="g">gap</span><span class="v">/500 m</span><span class="v t">W</span><span class="v t">spm</span></div>`;
+  $('board').innerHTML=(tv?head:'')+ord.map((s,i)=>{const v=val(s),pc=type==='work'?s.pace:v>5&&work?work/(v/500):0,w=type==='work'?s.w:Math.round(watts(work,v));
+    return `<div class="br${s.me?' me':''}"><i class="c" style="background:${col(s.id)};--dc:${col(s.id)}"></i><span class="n">${i+1}. ${esc(s.n)}</span><span class="v">${Math.round(v)} m</span><span class="g">${i&&top>0?'−'+Math.round(top-v)+' m':''}</span><span class="v">${fmtPace(pc)}</span><span class="v t">${w||'–'}</span><span class="v t">${type==='work'&&s.spm?s.spm:'–'}</span></div>`}).join('');
+  const ids=new Set(all.map(s=>s.id));
   for(const[id,g]of dots)if(!ids.has(id)){g.remove();dots.delete(id)}
   stable.forEach((s,k)=>{
     let g=dots.get(s.id);
-    if(!g){g=document.createElementNS(NS,'g');g.setAttribute('class','dot');g.innerHTML=`<circle r="11" stroke="#fff" stroke-width="2"/><text></text>`;$('track').appendChild(g);dots.set(s.id,g)}
-    g.firstChild.setAttribute('fill',col(s.id));g.lastChild.textContent=(s.n||'?').trim().charAt(0).toUpperCase();
+    if(!g){g=document.createElementNS(NS,'g');g.setAttribute('class','dot');g.innerHTML=`<circle r="9.5" stroke="#fff" stroke-width="1.8"/><text></text>`;$('track').appendChild(g);dots.set(s.id,g)}
+    g.firstChild.setAttribute('fill',col(s.id));g.firstChild.setAttribute('r',tv?4.2:9.5);g.firstChild.setAttribute('stroke-width',tv?.9:1.8);g.lastChild.textContent=(s.n||'?').trim().charAt(0).toUpperCase();
     const ln=lanes[k%LANES],f=(val(s)%lap)/lap,pt=ln.p.getPointAtLength(f*ln.L);
     if(g._f!=null&&f<g._f-.5){g.style.transition='none';g.style.transform=`translate(${pt.x}px,${pt.y}px)`;g.getBoundingClientRect();g.style.transition=''}
     else g.style.transform=`translate(${pt.x}px,${pt.y}px)`;
     g._f=f;
   });
 }
-function groupTable(){
-  ergs.forEach(e=>e.iv.filter(x=>x.done).forEach(x=>keep(PHONE+'-'+e.id,e.name,x.i,x.d)));
-  if(hist.size<2||!session)return;
-  const n=session.c.reps,list=[...hist.values()].map(h=>({n:h.n,r:h.r,t:Object.values(h.r).reduce((a,b)=>a+b,0)})).sort((a,b)=>b.t-a.t);
-  const reps=[...Array(n)].map((_,i)=>i+1);
-  $('resBody').insertAdjacentHTML('afterbegin',`<h3>Group · metres per rep</h3><div class="scroll"><table><thead><tr><th>Skier</th>${reps.map(r=>`<th>${r}</th>`).join('')}<th>Total</th></tr></thead><tbody>${list.map(s=>`<tr><td>${esc(s.n)}</td>${reps.map(r=>`<td>${s.r[r]!=null?Math.round(s.r[r]):'–'}</td>`).join('')}<td>${Math.round(s.t)}</td></tr>`).join('')}</tbody></table></div>`);
+if(WATCH==='?'){$('wjoin').hidden=false;$('loop').hidden=true;$('wjoin').addEventListener('submit',ev=>{ev.preventDefault();const c=clean($('wjIn').value);if(c)location.search='?se='+encodeURIComponent(c)})}
+else if(WATCH){ // spectator: listen only on the spectator topic, never publish
+  if(window.mqtt){const c=mqtt.connect(BROKER,{clientId:'sw'+PHONE+Math.random().toString(36).slice(2,6),clean:true,connectTimeout:8000,reconnectPeriod:3000,keepalive:20});cli=c;
+    c.on('connect',()=>c.subscribe(`${BASE}/w/${WATCH}/#`));
+    c.on('message',(t,b)=>{let m;try{m=JSON.parse(b.toString())}catch(_){return}if(m)onMsg(t.endsWith('/c')?'c':'s',m)})}
 }
-{let r='';try{r=decodeURIComponent(location.hash.slice(1))||localStorage.getItem('skierg-room')||''}catch(_){}joinRoom(r)}
+else{let r='';try{r=decodeURIComponent(location.hash.slice(1))||localStorage.getItem('skierg-room')||''}catch(_){}joinRoom(r);setW(wcode,false)}
+/* big-screen header buttons mirror Pause/Stop; the loop fills what the header leaves */
+$('hPause').addEventListener('click',()=>$('pause').click());$('hStop').addEventListener('click',()=>$('stop').click());
+setInterval(()=>{$('hb').hidden=$('runRow').hidden;$('hPause').textContent=$('pause').textContent;$('hStop').textContent=$('stop').textContent==='Stop session'?'Stop':'Tap again'},200);
+new ResizeObserver(()=>document.documentElement.style.setProperty('--hh',$('phase').offsetHeight+'px')).observe($('phase'));
 idleHeader();setInterval(tick,100);tick();
 }
 </script>
